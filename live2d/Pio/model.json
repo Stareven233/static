@@ -3,7 +3,7 @@
     "model":"model.moc",
     "textures":[
         "textures/pajamas-costume.png",
-        "school-2017-costume-yellow.png",
+        "textures/school-2017-costume-yellow.png",
         "textures/school-costume.png",
         "textures/default-costume.png"
     ],
