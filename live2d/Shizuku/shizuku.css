@@ -1,0 +1,18 @@
+#live2d {
+    position: fixed;
+    right: 0px;
+    bottom: -20px;
+    width: 200px;
+    height: 400px;
+    z-index: 99999;
+    opacity: 1;
+    pointer-events: none;
+}
+
+#shizuku {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 200px;
+    height: 400px;
+}
