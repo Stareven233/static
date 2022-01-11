@@ -1,0 +1,12 @@
+#live2d {
+    user-select: none;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 280px;
+    height: 250px;
+    z-index: 10000;
+    transition: all .3s ease-in-out;
+    /*  background-color: #86bbd3; */
+}
+
