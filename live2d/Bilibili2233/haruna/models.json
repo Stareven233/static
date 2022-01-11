@@ -1,5 +1,10 @@
 {
   "list": [
+    { "name": "22/2020.newyear", "model": "haruna/22/model.2020.newyear.json" },
+    { "name": "22/2019.deluxe", "model": "haruna/22/model.2019.deluxe.json" },
+    { "name": "22/2019.bls", "model": "haruna/22/model.2019.bls.json" },
+    { "name": "22/2019.summer", "model": "haruna/22/model.2019.summer.json" },
+    { "name": "22/2018.playwater", "model": "haruna/22/model.2018.playwater.json" },
     { "name": "22/default", "model": "haruna/22/model.default.json" },
     { "name": "22/2018.bls-winter", "model": "haruna/22/model.2018.bls-winter.json" },
     { "name": "22/2018.bls-summer", "model": "haruna/22/model.2018.bls-summer.json" },
