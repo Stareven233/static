@@ -2,8 +2,8 @@
 // @name         pageViewImproved
 // @name:en      pageViewImproved
 // @namespace    noetu
-// @version      0.3.1
-// @description  try to take over the world!
+// @version      0.4.0
+// @description  按期望定制页面显示效果
 // @author       Noe
 // @match        http://*/*
 // @match        https://*/*
@@ -14,14 +14,14 @@
 
 (function () {
   'use strict';
-  
-  const waitRemoveOne = (selector, waitTime=10) => {
-    let target = null;
+
+  const waitForOne = (selector, callback, waitTime=10) => {
+    let target = null
     const loop = setInterval(() => {
       target = document.querySelector(selector)
       if(target !== null) {
-        target.remove()
-        console.log(`remove ${selector}`)
+        callback(target)
+        console.log(`waitForOne: call ${callback} at oen ${selector}`)
         clearInterval(loop)
       }
     }, 200)
@@ -30,14 +30,15 @@
     }, waitTime*1000)
   }
 
-  const waitRemoveAll = (selector, waitTime=10) => {
-    let targets = null;
+  const waitForAll = (selector, callback, waitTime=10) => {
+    let targets = null
     const loop = setInterval(() => {
       targets = document.querySelectorAll(selector)
       if(targets !== null) {
-        targets.forEach(t => t.remove())
-        console.log(`remove ${selector}`)
-    }
+        targets.forEach(t => callback(t))
+        console.log(`waitForAll: call ${callback} at all ${selector}`)
+        clearInterval(loop)
+      }
     }, 200)
     setTimeout(() => {
       clearInterval(loop)
@@ -47,11 +48,13 @@
   const url = new URL(document.URL)
   switch(url.hostname) {
     case 'mangarawjp.com': {
-      waitRemoveAll("iframe")
+      waitForAll("iframe", t => t.remove())
       break;
     }
 
     case 'zh-v2.d2l.ai': {
+      // 某一本深度学习的书
+
       if(!url.pathname.startsWith('/chapter_')) {
         break;
       }
@@ -83,6 +86,8 @@
 
     case 'zhuanlan.zhihu.com':
     case 'www.zhihu.com': {
+      // 知乎
+
       const start_time = Date.now();
       let modals = null, flag = false, btn;
       const loop = setInterval(function () {
@@ -130,40 +135,29 @@
       break;
     }
 
-    case 'doki1001.com': {
-      const start_time = Date.now();
-      let modal = null, flag = false;
-      const loop = setInterval(function () {
-        modal = document.querySelector("body > ._4KjPzfFqnPyBgIgiXkX")
-        if(modal) {
-          modal.remove();
-          document.querySelector("body > .ipprtcnt").remove();
-          flag = true;
-        }
-        if(flag || Date.now() - start_time >= 10000) {
-          clearInterval(loop);
-        }
-      }, 200)
-      break;
-    }
     case 'mp.weixin.qq.com': {
+      // 微信公众号文章页面
+
       if(!url.pathname.startsWith('/s')) {
         return
       }
-      const sec = document.querySelector("#js_content > section");
-      sec.style.fontFamily = "Microsoft YaHei";
-      sec.style.color = "#000000";
-      const d = document.querySelector("#page-content > div");
-      d.style.maxWidth = "900px";
-      setTimeout(() => document.getElementById("js_pc_qr_code").remove(), 5000)
-      break;
+      const sec = document.querySelector("#js_content > section")
+      sec.style.fontFamily = "Microsoft YaHei"
+      sec.style.color = "#000000"
+      const d = document.querySelector("#page-content > div")
+      d.style.maxWidth = "900px"
+      waitForOne("#js_pc_qr_code", t => t.remove())
+      waitForAll(".rich_pages.wxw-img.img_loading", img => {img.src = img.dataset.src})
+      break
     }
+
     case 'www.manmanju.com': {
-      setTimeout(() => {
-        document.getElementById('fix_bottom_dom').remove()
-      }, 1000);
+      // 漫漫聚，看漫画的
+
+      waitForOne('#fix_bottom_dom', t => t.remove())
       break;
     }
+
     default:
       break;
   }
