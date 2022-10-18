@@ -2,7 +2,7 @@
 // @name         pageViewImproved
 // @name:en      pageViewImproved
 // @namespace    noetu
-// @version      0.4.2
+// @version      0.4.3
 // @description  按期望定制页面显示效果
 // @author       Noe
 // @match        http://*/*
@@ -15,7 +15,7 @@
 (function () {
   'use strict';
 
-  const waitForOne = (selector, callback, waitTime=6) => {
+  const waitForOne = (selector, callback, waitTime=10) => {
     let target = null
     const loop = setInterval(() => {
       target = document.querySelector(selector)
@@ -30,7 +30,7 @@
     }, waitTime*1000)
   }
 
-  const waitForAll = (selector, callback, waitTime=6) => {
+  const waitForAll = (selector, callback, waitTime=10) => {
     let targets = null
     let count = 0
     const tackleOne = (t) => {
@@ -157,14 +157,24 @@
 
       const d = document.querySelector("#page-content > div")
       d.style.maxWidth = "900px"
-      waitForAll("#js_content > section > span", s => {
+      waitForAll("#js_content > section p", s => {
         s.style.fontFamily = "Microsoft YaHei"
         s.style.color = "#000000"
         s.style.fontSize = '18px'
-
       })
       waitForOne("#js_pc_qr_code", t => t.remove())
-      waitForAll(".rich_pages.wxw-img.img_loading", img => {img.src = img.dataset.src})
+      waitForAll(".rich_pages.wxw-img, .js_img_placeholder", img => {
+        if(img.tagName !== 'IMG') {
+          const i = document.createElement('img')
+          i.src = img.dataset.src
+          img.parentElement.appendChild(i)
+          img.remove()
+          // nt微信会把一些图片放在span中
+        }
+        img.src = img.dataset.src
+        img.style.display = 'block'
+      })
+      // console.log(d)
       break
     }
 
