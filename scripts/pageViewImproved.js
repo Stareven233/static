@@ -2,7 +2,7 @@
 // @name         pageViewImproved
 // @name:en      pageViewImproved
 // @namespace    noetu
-// @version      0.4.3
+// @version      0.4.4
 // @description  按期望定制页面显示效果
 // @author       Noe
 // @match        http://*/*
@@ -163,7 +163,9 @@
         s.style.fontSize = '18px'
       })
       waitForOne("#js_pc_qr_code", t => t.remove())
-      waitForAll(".rich_pages.wxw-img, .js_img_placeholder", img => {
+
+      // waitForAll(".rich_pages.wxw-img, .js_img_placeholder", img => {
+        waitForAll(".rich_pages.wxw-img", img => {
         if(img.tagName !== 'IMG') {
           const i = document.createElement('img')
           i.src = img.dataset.src
@@ -172,9 +174,17 @@
           // nt微信会把一些图片放在span中
         }
         img.src = img.dataset.src
-        img.style.display = 'block'
+        img.style.display = 'inline-block'
       })
+
       // console.log(d)
+      const placeholderStyle = document.createElement('style')
+      placeholderStyle.innerText = `
+        .js_img_placeholder {
+          display: none;
+        }
+      `
+      document.head.appendChild(placeholderStyle)
       break
     }
 
