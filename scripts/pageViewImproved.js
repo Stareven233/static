@@ -2,7 +2,7 @@
 // @name         pageViewImproved
 // @name:en      pageViewImproved
 // @namespace    noetu
-// @version      0.5.1
+// @version      0.5.2
 // @description  按期望定制页面显示效果
 // @author       Noe
 // @match        http://*/*
@@ -16,14 +16,15 @@
   'use strict';
 
   const doneMark = 'noed'
-  const waitForOne = (selector, callback, interval=500, times=20) => {
+  const waitForOne = (selector, callback, interval=500, times=10, disableMark=false) => {
     let target = null
     const loop = setInterval(() => {
       target = document.querySelector(selector)
-      if(target !== null && !target.hasAttribute(doneMark)) {
+      if(target !== null && (disableMark || !target.hasAttribute(doneMark))) {
         callback(target)
         console.log(`waitForOne: call ${callback} at 1 ${selector}`)
         target.setAttribute(doneMark, '')
+        clearInterval(loop)
       }
     }, interval)
     if(typeof times !== 'number') {
@@ -32,6 +33,9 @@
     // times不是次数就当做要无限查找
     setTimeout(() => {
       clearInterval(loop)
+      if (!target) {
+        console.log(`waitForOne: cannot find ${callback}, retry = ${interval}ms * ${times}`)
+      }
     }, interval*times)
   }
 
@@ -66,7 +70,7 @@
   const url = new URL(document.URL)
   switch(url.hostname) {
     case 'mangarawjp.com': {
-      waitForAll("iframe", t => t.remove())
+      waitForAll('iframe', t => t.remove())
       break
     }
 
@@ -163,7 +167,7 @@
 
       document.querySelector("#page-content > div").style.maxWidth = "1000px"
       waitForOne("#js_pc_qr_code", t => t.remove())
-  
+
       const placeholderStyle = document.createElement('style')
       placeholderStyle.innerText = `
         .js_img_placeholder {
@@ -206,7 +210,7 @@
       waitForOne('#fix_bottom_dom', t => t.remove())
       break;
     }
-  
+
     case 'pc.xuexi.cn': {
       if (!url.pathname.startsWith('/points/exam-paper-detail.html')) {
         break
@@ -238,18 +242,59 @@
         break
       }
       const btn = document.createElement('a')
-      btn.className = 'u-btn f-fl'
+      btn.className = 'u-btn'
       btn.addEventListener('click', event => {
-        waitForOne('#courseLearn-inner-box .j-homework-box .j-answer.answer .j-content > div.j-list.list .detail > .s', e => e.children[4].children[0].checked=true, 500, 2)
-        waitForOne('#courseLearn-inner-box .j-homework-box .j-answer.answer .j-comment.comment .answerVisible.f-fl > .j-acb', e => e.checked=false, 500, 2)
-        waitForOne('#courseLearn-inner-box .j-homework-box .j-answer.answer .j-comment.comment .j-commentRichOrText.detail .j-textarea.inputtxt', e => e.value='乌拉', 500, 2)
+        const grade = Math.ceil(Math.random() * 3 + 1)
+        waitForOne('#courseLearn-inner-box .j-homework-box .j-answer.answer', elem => {
+          elem.querySelector('.j-content > div.j-list.list .detail > .s').children[grade].children[0].checked = true
+          elem.querySelector('.j-comment.comment .answerVisible.f-fl > .j-acb').checked=false
+          elem.querySelector('.j-comment.comment .j-commentRichOrText.detail .j-textarea.inputtxt').value='乌拉'
+        }, 500, 2, true)
       })
       btn.innerText = 'FUCK'
       btn.style.backgroundImage = '-webkit-gradient(linear, left top, left bottom, from(#fcadd3), to(#f7738b))'
       btn.style.border = 'none'
       btn.style.color = 'white'
       waitForOne('#courseLearn-inner-box .j-homework-box .bottombtnwrap.f-cb.j-btnwrap', e => e.appendChild(btn))
+      break
     }
+
+    case 'ntp.msn.cn': {
+      console.log(url)
+      if (!url.pathname.startsWith('/edge/ntp')) {
+        break
+      }
+      console.log(url)
+      const btn = document.querySelector('body > fluent-design-system-provider > edge-chromium-page').shadowRoot.querySelector('#bgInnerHolder > background-image').shadowRoot.querySelector('#museumCardButton')
+      console.log(btn)
+      if (btn.title === '退出完整视图') {
+        return
+      }
+      console.log(btn)
+      btn.click()
+      break
+    }
+
+    case 'fzuyjsy.yuketang.cn': {
+      const next = () => {
+        const [_, root, path] = /(.*?)\/(\d+)$/.exec(window.location.href)
+        window.location.href = `${root}/${parseInt(path) + 1}`
+      }
+      waitForOne('#video-box > div > xt-wrap > video', v => {
+        // window.vue_this.player.$controls.find('xt-volumebutton > xt-icon').click()
+        const volumeBtn = v.parentElement.querySelector('xt-controls > xt-inner > xt-volumebutton > xt-icon')
+        volumeBtn.click()
+        v.play()
+        setTimeout(next, (v.duration + 5)*1000)
+      }, 2000, 5)
+      // const video = document.querySelector('#video-box > div > xt-wrap > video')
+      // if (video === null) {
+      //   alert('非法视频')
+      // }
+      // video.play()
+      // setTimeout(next, (video.duration - video.currentTime+5)*1000)
+    }
+
     default:
       break
   }
