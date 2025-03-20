@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         pageViewImproved
 // @name:en      pageViewImproved
-// @namespace    noetu
-// @version      0.5.2
+// @namespace    http://noe.cc/
+// @version      0.6.3
 // @description  按期望定制页面显示效果
 // @author       Noe
 // @match        http://*/*
@@ -13,10 +13,11 @@
 // ==/UserScript==
 
 (function () {
-  'use strict';
+  'use strict'
 
+  const use_remove_anything = true
   const doneMark = 'noed'
-  const waitForOne = (selector, callback, interval=500, times=10, disableMark=false) => {
+  const waitForOne = (selector, callback, interval=500, times=20, disableMark=false) => {
     let target = null
     const loop = setInterval(() => {
       target = document.querySelector(selector)
@@ -24,7 +25,6 @@
         callback(target)
         console.log(`waitForOne: call ${callback} at 1 ${selector}`)
         target.setAttribute(doneMark, '')
-        clearInterval(loop)
       }
     }, interval)
     if(typeof times !== 'number') {
@@ -33,9 +33,6 @@
     // times不是次数就当做要无限查找
     setTimeout(() => {
       clearInterval(loop)
-      if (!target) {
-        console.log(`waitForOne: cannot find ${callback}, retry = ${interval}ms * ${times}`)
-      }
     }, interval*times)
   }
 
@@ -67,10 +64,103 @@
     }, waitTime*1000)
   }
 
+  function removeAnything () {
+    let isFrozen = true
+    const button = document.createElement('button')
+    button.textContent = 'Unfreeze'
+    const styles = {
+      textAlign: 'left',
+      position: 'fixed',
+      height: '2rem',
+      width: '5rem',
+      borderRadius: '0.4rem',
+      padding: '0.2rem 0.3rem',
+      right: '-4.2rem',
+      bottom: '60%',
+      transition: 'right 0.15s ease-in-out',
+      border: '1px solid #ff563f',
+      cursor: 'pointer',
+      zIndex: 60000, // 确保按钮在其他元素上方
+    }
+    Object.assign(button.style, styles)
+    document.body.appendChild(button)
+
+    let lastTarget = null
+    let lastListener = null
+    let lastEvent = { timeStamp: 0 }
+
+    function highlightAndDelete(event) {
+      if (isFrozen || event.timeStamp - lastEvent.timeStamp < 100) {
+        return
+      }
+      lastEvent = event
+      // 通过坐标找到当前鼠标所在的元素
+      const target = document.elementFromPoint(event.clientX, event.clientY)
+
+      if (!target || target === button || target === lastTarget) {
+        return
+      }
+
+      if (target && target !== lastTarget) {
+        if (lastTarget) {
+          lastTarget.style.outline = '' // 移除之前的高亮
+        }
+        lastTarget = target
+        lastTarget.style.outline = '4px solid #ff6644' // 高亮当前元素
+
+        // 绑定点击事件以删除目标元素
+        const removeClickListener = e => {
+          if (e.target === button) {  // 确保不是在按钮上点击
+            return
+          }
+          e.preventDefault()
+          lastTarget.remove()
+        }
+        lastListener = removeClickListener
+        document.addEventListener('click', removeClickListener, { once: true, capture: true })
+      }
+    }
+
+    button.addEventListener('click', () => {
+      isFrozen = !isFrozen
+      button.textContent = isFrozen ? 'Unfreeze' : 'Freeze'
+      if (!isFrozen) {
+        // 每次解冻时重新开始监听
+        document.addEventListener('mousemove', highlightAndDelete)
+        return
+      }
+      // 冻结时移除事件监听
+      document.removeEventListener('mousemove', highlightAndDelete)
+      // 移除之前绑定的删除点击事件，以防止按钮被误删
+      if (!lastListener) {
+        return
+      }
+      document.removeEventListener('click', lastListener, { once: true, capture: true })
+      lastTarget.style.outline = ''
+      lastTarget = null
+      lastListener = null
+    })
+
+    button.addEventListener('mouseover', function() {
+      // 当鼠标移到上面时，将整个矩形显示出来
+      button.style.right = '0px'
+    })
+    // 添加鼠标移开事件监听器
+    button.addEventListener('mouseout', function() {
+      // 当鼠标离开时，恢复初始状态（只露出三分之一）
+      button.style.right = '-70px'
+    })
+  }
+  if (use_remove_anything) {
+    removeAnything()
+  }
+
+  waitForAll('.adsbygoogle', e => e.remove())
+
   const url = new URL(document.URL)
   switch(url.hostname) {
     case 'mangarawjp.com': {
-      waitForAll('iframe', t => t.remove())
+      waitForAll("iframe", t => t.remove())
       break
     }
 
@@ -211,28 +301,30 @@
       break;
     }
 
-    case 'pc.xuexi.cn': {
-      if (!url.pathname.startsWith('/points/exam-paper-detail.html')) {
+    case 'www.baicaimanhua.com': {
+      if (!url.pathname.startsWith('/mhread.php')) {
         break
       }
-      // 学习强国-专项答题
-      waitForOne('#app .layout-body .detail-body > div.question .tips', t => {
-        const antPopover = document.querySelector('#body-body .ant-popover')
-        if (antPopover === null || antPopover.classList.contains('ant-popover-hidden')) {
-          t.click()
+      // 白菜漫画
+      const mainStyles = {
+        'display': 'flex',
+        'flex-direction': 'row',
+        'flex-wrap': 'wrap',
+        'gap': '1%',
+        'width': '60%',
+        'margin-left': '20%',
+      }
+      waitForOne('#content > div > .comicpage', t => {
+        Object.assign(t.style, mainStyles)
+        for (const c of t.children) {
+          if (!c.tagName === 'img') {
+            continue
+          }
+          c.style.width = '49%'
+          c.style.border = '1px solid #ff8833'
         }
-        setTimeout(() => {
-          console.log('t :>> ', t)
-          t.removeAttribute(doneMark)
-          console.log('t :>> ', t)
-        }, 500)
-      }, 2000, 'inf')
-      // waitForOne('#body-body .ant-popover.ant-popover-hidden', t => {
-      //   // t.style.display = 'block'
-      // }
-      waitForOne('#body-body .ant-popover .ant-popover-inner .line-feed', t => t.style.userSelect = 'text')
-      // const clickTips = () => document.querySelector('#app .detail-body .action-row > button').click()
-      // waitForOne('#app .detail-body .action-row > button', t => t.addEventListener('click', setTimeout(clickTips, 500)))
+      }, 2000, 10)
+      waitForOne('body > div.header', t => t.remove())
       break
     }
 
@@ -256,43 +348,39 @@
       btn.style.border = 'none'
       btn.style.color = 'white'
       waitForOne('#courseLearn-inner-box .j-homework-box .bottombtnwrap.f-cb.j-btnwrap', e => e.appendChild(btn))
-      break
     }
 
-    case 'ntp.msn.cn': {
-      console.log(url)
-      if (!url.pathname.startsWith('/edge/ntp')) {
+    case 'console.volcengine.com': {
+      // 登录记住用户名密码
+      if (!url.pathname.startsWith('/auth/login')) {
         break
       }
-      console.log(url)
-      const btn = document.querySelector('body > fluent-design-system-provider > edge-chromium-page').shadowRoot.querySelector('#bgInnerHolder > background-image').shadowRoot.querySelector('#museumCardButton')
-      console.log(btn)
-      if (btn.title === '退出完整视图') {
-        return
-      }
-      console.log(btn)
-      btn.click()
-      break
+      // localStorage.setItem('login-username', 'n?')
+      waitForOne('#Identity_input', e => e.value = localStorage.getItem('login-username'))
     }
 
-    case 'fzuyjsy.yuketang.cn': {
-      const next = () => {
-        const [_, root, path] = /(.*?)\/(\d+)$/.exec(window.location.href)
-        window.location.href = `${root}/${parseInt(path) + 1}`
+    case 'space.bilibili.com': {
+      // 自动跳页
+      if (!url.pathname.startsWith('/118938280/search')) {
+        break
       }
-      waitForOne('#video-box > div > xt-wrap > video', v => {
-        // window.vue_this.player.$controls.find('xt-volumebutton > xt-icon').click()
-        const volumeBtn = v.parentElement.querySelector('xt-controls > xt-inner > xt-volumebutton > xt-icon')
-        volumeBtn.click()
-        v.play()
-        setTimeout(next, (v.duration + 5)*1000)
-      }, 2000, 5)
-      // const video = document.querySelector('#video-box > div > xt-wrap > video')
-      // if (video === null) {
-      //   alert('非法视频')
-      // }
-      // video.play()
-      // setTimeout(next, (video.duration - video.currentTime+5)*1000)
+      const page = localStorage.getItem('227')
+      // localStorage.setItem('227', 13)
+      if (!page) {
+        waitForOne('#app > main > .space-search > .search-content .video-header > .video-header__top > .title', e => e.innerText += '\t还未设定跳转页数！先执行：localStorage.setItem(`227`, pageID)')
+        return
+      }
+      const enterEvent = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+        bubbles: true
+      })
+      waitForOne('#app > main > .space-search > .search-content .video-footer .vui_pagenation-go input.vui_input__input', e => {
+        e.value = page
+        e.dispatchEvent(enterEvent)
+      })
     }
 
     default:
